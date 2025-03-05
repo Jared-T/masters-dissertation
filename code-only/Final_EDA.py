@@ -8,8 +8,8 @@ import pandas as pd
 import os
 
 # Read in the dataset
-trans_df = pd.read_csv(os.path.join("..", "data", "Final with Coords, Fuel Type and Prices.csv"))
-vehicle_df = pd.read_csv(os.path.join("..", "data", "Final KMPL dataset.csv"))
+trans_df = pd.read_csv(os.path.join("data", "Final with Coords, Fuel Type and Prices.csv"))
+vehicle_df = pd.read_csv(os.path.join("data", "Final KMPL dataset.csv"))
 
 
 # In[2]:
@@ -156,7 +156,7 @@ def create_countplot(data, filename, threshold, max_length=50):
     plt.tight_layout()
 
     # Save the plot as a PDF file
-    plt.savefig(filename, format='pdf', bbox_inches='tight')
+    plt.savefig(f'plots/eda/{filename}', format='pdf', bbox_inches='tight')
 
     # Close the plot
     plt.close(fig)
@@ -214,7 +214,7 @@ def countplot_side_by_side(data1, data2, title1, title2, filename, threshold1, t
     plt.tight_layout()
 
     # Save the plot as a PDF file
-    plt.savefig(filename, format='pdf', bbox_inches='tight')
+    plt.savefig(f'plots/eda/{filename}', format='pdf', bbox_inches='tight')
 
     # Close the plot
     plt.close(fig)
@@ -254,7 +254,7 @@ def histogram_side_by_side(data1, var1, data2, var2, title1, title2, filename, b
     plt.tight_layout()
 
     # Save the plot as a PDF file
-    plt.savefig(filename, format='pdf', bbox_inches='tight')
+    plt.savefig(f'plots/eda/{filename}', format='pdf', bbox_inches='tight')
 
     # Close the plot
     plt.close(fig)
@@ -310,7 +310,7 @@ def barplot_side_by_side(data, cat_var, cont_var1, cont_var2, title1, title2, fi
     plt.tight_layout()
 
     # Save the plot as a PDF file
-    plt.savefig(filename, format='pdf', bbox_inches='tight')
+    plt.savefig(f'plots/eda/{filename}', format='pdf', bbox_inches='tight')
 
     # Close the plot
     plt.close(fig)
@@ -365,7 +365,7 @@ def histogram_2x2(data1, var1, data2, var2, data3, var3, title1, title2, title3,
     plt.tight_layout()
 
     # Save the plot as a PDF file
-    plt.savefig(filename, format='pdf', bbox_inches='tight')
+    plt.savefig(f'plots/eda/{filename}', format='pdf', bbox_inches='tight')
 
     # Close the plot
     plt.close(fig)
@@ -404,7 +404,7 @@ def boxplot_side_by_side_cat(data, cat_var1, cat_var2, cont_var, title1, title2,
     plt.tight_layout()
     
     # Save the plot as a PDF file with high resolution
-    plt.savefig(filename, format='pdf', dpi=300)
+    plt.savefig(f'plots/eda/{filename}', format='pdf', dpi=300)
     
     # Close the plot
     plt.close(fig)
@@ -436,25 +436,25 @@ trans_data_rate_card = trans_df['RATE CARD CATEGORY'].value_counts()
 # Create and save individual plots
 countplot_side_by_side(fleet_data_derivative, trans_data_derivative, 
                      'Fleet', 'Transactions', 
-                     '../plots/eda/model_derivative.pdf', 
+                     'model_derivative.pdf', 
                      25, 5000,
                      20)
 
 countplot_side_by_side(fleet_data_make, trans_data_make, 
                      'Fleet', 'Transactions', 
-                     '../plots/eda/make.pdf', 
+                     'make.pdf', 
                      20, 5000,
                      20)
 
 countplot_side_by_side(fleet_data_department, trans_data_department, 
                      'Fleet', 'Transactions', 
-                     '../plots/eda/department.pdf', 
+                     'department.pdf', 
                      20, 5000,
                      20)
 
 countplot_side_by_side(fleet_data_rate_card, trans_data_rate_card, 
                      'Fleet', 'Transactions', 
-                     '../plots/eda/rate_card.pdf', 
+                     'rate_card.pdf', 
                      20, 5000,
                      20)
 
@@ -491,7 +491,7 @@ trans_data_month = trans_df['Month Name'].value_counts()
 # Create and save individual plots
 countplot_side_by_side(trans_data_wday, trans_data_month, 
                      'Weekday', 'Month', 
-                     '../plots/eda/month_weekday.pdf', 
+                     'month_weekday.pdf', 
                      5000, 5000,
                      30)
 
@@ -504,7 +504,7 @@ trans_data_fuel_type = trans_df['Fuel Type'].value_counts()
 
 countplot_side_by_side(trans_data_merchant, trans_data_fuel_type, 
                      'Merchant Name', 'Fuel Type', 
-                     '../plots/eda/merchants_fuel_type.pdf', 
+                     'merchants_fuel_type.pdf', 
                      3000, 2000,
                      30)
 
@@ -530,7 +530,7 @@ vehicle_data_site = vehicle_df_ns['Site'].value_counts()
 # Create and save individual plots
 countplot_side_by_side(vehicle_data_district, vehicle_data_site, 
                      'District', 'Site', 
-                     '../plots/eda/district_site.pdf', 
+                     'district_site.pdf', 
                      20, 8,
                      30)
 
@@ -555,7 +555,7 @@ vehicle_df.rename(columns={'KMPL': 'Kilometres per Litre'}, inplace=True)
 
 histogram_2x2(trans_df_ne, 'Transaction Amount', trans_df_ne, 'No. of Litres', vehicle_df, 'Kilometres per Litre',
                        'Transaction Amount', 'Number of Litres', 'Kilometres per Litre',
-                     '../plots/eda/transaction_litres_kmpl.pdf', 
+                     'transaction_litres_kmpl.pdf', 
                      20)
 
 
@@ -564,7 +564,7 @@ histogram_2x2(trans_df_ne, 'Transaction Amount', trans_df_ne, 'No. of Litres', v
 
 histogram_side_by_side(trans_df_ne, 'Days Between Transactions', vehicle_df, 'Average Days Between Transactions',
                        'Transactions', 'Vehicles', 
-                     '../plots/eda/days_between_transactions.pdf', 
+                     'days_between_transactions.pdf', 
                      20)
 
 
@@ -581,37 +581,37 @@ trans_df.columns
 
 barplot_side_by_side(trans_df, 'VEHICLE MAKE', 'Transaction Amount', 'No. of Litres',
                      'Transaction Amount', 'Number of Litres', 
-                     '../plots/eda/biplot_make.pdf', 
+                     'biplot_make.pdf', 
                      25)
 
 barplot_side_by_side(trans_df, 'MODEL DERIVATIVE', 'Transaction Amount', 'No. of Litres',
                      'Transaction Amount', 'Number of Litres', 
-                     '../plots/eda/biplot_derivative.pdf', 
+                     'biplot_derivative.pdf', 
                      25)
 
 barplot_side_by_side(trans_df, 'DEPARTMENT', 'Transaction Amount', 'No. of Litres',
                      'Transaction Amount', 'Number of Litres', 
-                     '../plots/eda/biplot_department.pdf', 
+                     'biplot_department.pdf', 
                      25)
 
 barplot_side_by_side(trans_df, 'RATE CARD CATEGORY', 'Transaction Amount', 'No. of Litres',
                      'Transaction Amount', 'Number of Litres', 
-                     '../plots/eda/biplot_category.pdf', 
+                     'biplot_category.pdf', 
                      25)
 
 barplot_side_by_side(trans_df, 'District', 'Transaction Amount', 'No. of Litres',
                      'Transaction Amount', 'Number of Litres', 
-                     '../plots/eda/biplot_district.pdf', 
+                     'biplot_district.pdf', 
                      25)
 
 barplot_side_by_side(trans_df, 'Month Name', 'Transaction Amount', 'No. of Litres',
                      'Transaction Amount', 'Number of Litres', 
-                     '../plots/eda/biplot_month.pdf', 
+                     'biplot_month.pdf', 
                      25)
 
 barplot_side_by_side(trans_df, 'Weekday Name', 'Transaction Amount', 'No. of Litres',
                      'Transaction Amount', 'Number of Litres', 
-                     '../plots/eda/biplot_wday.pdf', 
+                     'biplot_wday.pdf', 
                      25)
 
 
@@ -629,7 +629,7 @@ trans_df['Days Between Transactions Category'] = pd.cut(trans_df['Days Between T
 
 barplot_side_by_side(trans_df, 'Days Between Transactions Category', 'Transaction Amount', 'No. of Litres',
                      'Transaction Amount', 'Number of Litres', 
-                     '../plots/eda/biplot_numdays.pdf', 
+                     'biplot_numdays.pdf', 
                      25, show_obs_count=True)
 
 
@@ -667,7 +667,7 @@ ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, ha='right')
 plt.tight_layout()
 
 # Save the plot as a PDF file with high resolution
-plt.savefig('../plots/eda/boxplot_avgdays_avglitres_diff.pdf', format='pdf', dpi=300)
+plt.savefig('plots/eda/boxplot_avgdays_avglitres_diff.pdf', format='pdf', dpi=300)
 
 # Close the plot
 plt.close(fig)
@@ -691,7 +691,7 @@ greater_than_30_days_df[['Transaction Date', 'REG_NUM', 'Transaction Amount', 'N
 
 
 # Save the filtered dataset to a new CSV file
-trans_df.to_csv(os.path.join("..", "data", "Final for clustering.csv"), index=False)
+trans_df.to_csv(os.path.join("data", "Final for clustering.csv"), index=False)
 
 
 # In[21]:
@@ -711,7 +711,7 @@ trans_df.columns
 
 
 # Save the 'REG_NUM', 'Merchant Lat' and 'Merchant Long' to a new CSV file
-trans_df[['REG_NUM', 'Merchant Lat', 'Merchant Long']].to_csv(os.path.join("..", "data", "Final for QGIS.csv"), index=False)
+trans_df[['REG_NUM', 'Merchant Lat', 'Merchant Long']].to_csv(os.path.join("data", "Final for QGIS.csv"), index=False)
 
 
 # In[36]:
@@ -731,7 +731,7 @@ vehicle_df.columns
 
 boxplot_side_by_side_cat(vehicle_df, 'MODEL DERIVATIVE', 'RATE CARD CATEGORY', 'Kilometres per Litre',
                          'model derivative', 'rate card category', 
-                         '../plots/eda/biplot_kmpl.pdf')
+                         'biplot_kmpl.pdf')
 
 
 # In[78]:

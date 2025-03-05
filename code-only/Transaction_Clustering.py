@@ -17,7 +17,7 @@ import pandas as pd
 import os
 
 # Read in the dataset
-trans_df = pd.read_csv(os.path.join("..", "data", "Final for clustering.csv"))
+trans_df = pd.read_csv(os.path.join("data", "Final for clustering.csv"))
 
 
 # In[2]:
@@ -48,7 +48,7 @@ anonymized_mapping_subset = {reg_num: 'ANON_REG_NUM_' + str(i) for i, reg_num in
 trans_df_for_report['REG_NUM'] = trans_df_for_report['REG_NUM'].map(anonymized_mapping_subset)
 
 # Save the anonymized dataset to a new CSV file
-trans_df_for_report.to_csv('../data/anonymized_transactions.csv', index=False)
+trans_df_for_report.to_csv('data/anonymized_transactions.csv', index=False)
 
 
 # In[86]:

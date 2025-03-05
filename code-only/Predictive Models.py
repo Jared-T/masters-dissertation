@@ -9,7 +9,7 @@ import openpyxl
 import os
 import tslearn
 
-file_path = os.path.join("..", "data", "Final Transactions With Flags.csv")
+file_path = os.path.join("data", "Final Transactions With Flags.csv")
 data_in = pd.read_csv(file_path, low_memory=False)
 
 
@@ -596,7 +596,7 @@ def plot_confusion_matrix(y_true, y_pred, model_name, dpi=300):
     
     # Save the plot as a PDF file
     plt.tight_layout()
-    plt.savefig(f'../plots/modelling/{model_name}_confusion_matrix.pdf', format='pdf', dpi=dpi)
+    plt.savefig(f'plots/modelling/{model_name}_confusion_matrix.pdf', format='pdf', dpi=dpi)
     plt.show()
 
 
@@ -639,7 +639,7 @@ def plot_roc_curve_multiclass(model, X_test, y_test, model_name):
     plt.yticks(fontsize=12)
     plt.legend(loc="lower right", fontsize=13)
     plt.tight_layout()
-    plt.savefig(f'../plots/modelling/{model_name}_roc_curve.pdf', format='pdf', dpi=300)
+    plt.savefig(f'plots/modelling/{model_name}_roc_curve.pdf', format='pdf', dpi=300)
     plt.show()
 
 

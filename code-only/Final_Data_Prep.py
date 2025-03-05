@@ -26,7 +26,7 @@ import os
 
 
 # Load in the transaction dataset
-raw_trans = pd.read_csv(os.path.join("..", "data", "2021 Monthly Full Transactions.csv"))
+raw_trans = pd.read_csv(os.path.join("data", "2021 Monthly Full Transactions.csv"))
 
 
 # In[3]:
@@ -59,7 +59,7 @@ anonymized_mapping_subset = {reg_num: 'ANON_REG_NUM_' + str(i) for i, reg_num in
 trans_df_for_report['REG_NUM'] = trans_df_for_report['REG_NUM'].map(anonymized_mapping_subset)
 
 # Save the anonymized dataset to a new CSV file
-trans_df_for_report.to_csv('../data/anonymized_raw_transactions.csv', index=False)
+trans_df_for_report.to_csv('data/anonymized_raw_transactions.csv', index=False)
 
 
 # # 2. Merge the transaction data with the fleet register datasets
@@ -69,7 +69,7 @@ trans_df_for_report.to_csv('../data/anonymized_raw_transactions.csv', index=Fals
 # In[8]:
 
 
-full_register = pd.read_csv(os.path.join("..", "data", "full_fleet_register.csv"), sep=';')
+full_register = pd.read_csv(os.path.join("data", "full_fleet_register.csv"), sep=';')
 
 colnames = ['NEW REG  NO.', 'VEHICLE MAKE', 'MODEL DERIVATIVE', 'DEPARTMENT', 'RATE CARD CATEGORY']
 
@@ -87,7 +87,7 @@ full_register.shape
 # In[9]:
 
 
-white = pd.read_csv(os.path.join("..", "data", "white fleet data.csv"), sep=';')
+white = pd.read_csv(os.path.join("data", "white fleet data.csv"), sep=';')
 
 colnames = ['Reg No', 'Old Reg', 'Site', 'District']
 
@@ -99,7 +99,7 @@ white = white.rename(columns={'Rental ': 'Rental'})
 # In[10]:
 
 
-ems = pd.read_csv(os.path.join("..", "data", "EMS Fleet Data Sep 2022.csv"), sep=';')
+ems = pd.read_csv(os.path.join("data", "EMS Fleet Data Sep 2022.csv"), sep=';')
 
 colnames = ['Reg No', 'Old Reg', 'Site', 'District']
 
@@ -161,7 +161,7 @@ anonymized_mapping_subset = {reg_num: 'ANON_REG_NUM_' + str(i) for i, reg_num in
 trans_df_for_report['Reg'] = trans_df_for_report['Reg'].map(anonymized_mapping_subset)
 
 # Save the anonymized dataset to a new CSV file
-trans_df_for_report.to_csv('../data/anonymized_raw_ems_white_register.csv', index=False)
+trans_df_for_report.to_csv('data/anonymized_raw_ems_white_register.csv', index=False)
 
 
 # In[13]:
@@ -180,7 +180,7 @@ anonymized_mapping_subset = {reg_num: 'ANON_REG_NUM_' + str(i) for i, reg_num in
 trans_df_for_report['Reg No'] = trans_df_for_report['Reg No'].map(anonymized_mapping_subset)
 
 # Save the anonymized dataset to a new CSV file
-trans_df_for_report.to_csv('../data/anonymized_raw_fleet_register.csv', index=False)
+trans_df_for_report.to_csv('data/anonymized_raw_fleet_register.csv', index=False)
 
 
 # In[14]:
@@ -650,7 +650,7 @@ clean_data.shape
 
 
 # Save the cleaned dataset to a new CSV file
-clean_data.to_csv(os.path.join("..", "data", "cleaned_data.csv"), index=False)
+clean_data.to_csv(os.path.join("data", "cleaned_data.csv"), index=False)
 
 
 # # 4. Add the coordinates of the transactions based on the merchant name
@@ -659,7 +659,7 @@ clean_data.to_csv(os.path.join("..", "data", "cleaned_data.csv"), index=False)
 
 
 # Read in the clean dataset 
-clean_data = pd.read_csv(os.path.join("..", "data", "cleaned_data.csv"))
+clean_data = pd.read_csv(os.path.join("data", "cleaned_data.csv"))
 
 
 # In[136]:
@@ -728,7 +728,7 @@ clean_data['Merchant Long'] = clean_data['Merchant Name'].map(lambda x: cached_c
 
 
 # Save the transformed data to a csv file in the data folder
-clean_data.to_csv(os.path.join("..", "data", "cleaned_data_with_coords.csv"), index=False)
+clean_data.to_csv(os.path.join("data", "cleaned_data_with_coords.csv"), index=False)
 
 
 # # 5. Add the true fuel prices to the transactions
@@ -739,7 +739,7 @@ clean_data.to_csv(os.path.join("..", "data", "cleaned_data_with_coords.csv"), in
 
 
 # Load the cleaned data with coordinates
-clean_data = pd.read_csv(os.path.join("..", "data", "cleaned_data_with_coords.csv"))
+clean_data = pd.read_csv(os.path.join("data", "cleaned_data_with_coords.csv"))
 
 
 # ## 5.2 Create a fuel type column to store each vehicles fuel type
@@ -766,7 +766,7 @@ unique_models_df['Fuel Type'] = 'Diesel'
 # Sort the DataFrame by the model derivative
 unique_models_df = unique_models_df.sort_values(by='Model Derivative')
 
-unique_models_df.to_csv(os.path.join("..", "data", "unique_models.csv"), index=False)
+unique_models_df.to_csv(os.path.join("data", "unique_models.csv"), index=False)
 
 
 # In[151]:
@@ -803,7 +803,7 @@ clean_data.loc[clean_data['MODEL DERIVATIVE'].isin(petrol), 'Fuel Type'] = 'Petr
 
 
 # Save the transformed data to a csv file in the data folder
-clean_data.to_csv(os.path.join("..", "data", "cleaned_data_with_coords_and_fuel_type.csv"), index=False)
+clean_data.to_csv(os.path.join("data", "cleaned_data_with_coords_and_fuel_type.csv"), index=False)
 
 
 # ## Add the actual fuel prices
@@ -812,7 +812,7 @@ clean_data.to_csv(os.path.join("..", "data", "cleaned_data_with_coords_and_fuel_
 
 
 # Read in the dataset
-clean_data = pd.read_csv(os.path.join("..", "data", "cleaned_data_with_coords_and_fuel_type.csv"))
+clean_data = pd.read_csv(os.path.join("data", "cleaned_data_with_coords_and_fuel_type.csv"))
 
 # Convert the transaction date to datetime
 clean_data['Transaction Date'] = pd.to_datetime(clean_data['Transaction Date'])
@@ -821,7 +821,7 @@ clean_data['Transaction Date'] = pd.to_datetime(clean_data['Transaction Date'])
 # In[158]:
 
 
-file_path_fuel = os.path.join("..", "data", "FuelPricesWithDates.csv")
+file_path_fuel = os.path.join("data", "FuelPricesWithDates.csv")
 
 # Load the dataset
 fuel_data = pd.read_csv(file_path_fuel, delimiter=';').transpose()
@@ -935,7 +935,7 @@ clean_data[['Transaction Date', 'Fuel Type', 'MODEL DERIVATIVE',
 
 
 # Save the data frame
-clean_data.to_csv(os.path.join("..", "data", "Final with Coords, Fuel Type and Prices.csv"), index=False)
+clean_data.to_csv(os.path.join("data", "Final with Coords, Fuel Type and Prices.csv"), index=False)
 
 
 # ## Create a fuel efficiency dataset based on tracker data (too many issues)
@@ -947,14 +947,14 @@ import pandas as pd
 import os
 
 # Read in the dataset
-df = pd.read_csv(os.path.join("..", "data", "Final with Coords, Fuel Type and Prices.csv"))
+df = pd.read_csv(os.path.join("data", "Final with Coords, Fuel Type and Prices.csv"))
 
 
 # In[2]:
 
 
 # Read in the tracker data
-file_path = os.path.join("..", "data", "OdoValuesTracker.csv")
+file_path = os.path.join("data", "OdoValuesTracker.csv")
 
 # Load the dataset
 tracker_data = pd.read_csv(file_path)
@@ -1118,5 +1118,5 @@ final_data.head()
 
 
 # Save the final data
-final_data.to_csv(os.path.join("..", "data", "Final KMPL dataset.csv"), index=False)
+final_data.to_csv(os.path.join("data", "Final KMPL dataset.csv"), index=False)
 

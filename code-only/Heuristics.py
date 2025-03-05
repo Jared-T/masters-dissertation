@@ -10,8 +10,8 @@ import os
 import tslearn
 
 # Read in the dataset
-data = pd.read_csv(os.path.join("..", "data", "Final for clustering.csv"))
-kmpl_data = pd.read_csv(os.path.join("..", "data", "Final KMPL dataset.csv"))
+data = pd.read_csv(os.path.join("data", "Final for clustering.csv"))
+kmpl_data = pd.read_csv(os.path.join("data", "Final KMPL dataset.csv"))
 
 
 # In[2]:
@@ -133,7 +133,7 @@ data['Number_of_Flags'].value_counts()
 
 
 # Save the data to a new file
-data.to_csv('../data/Final Transactions With Flags.csv', index=False)
+data.to_csv('data/Final Transactions With Flags.csv', index=False)
 
 
 # In[15]:
@@ -153,7 +153,7 @@ kmpl_data['KMPL_Flag'].value_counts()
 
 
 # Save the KMPL flagged data to a new file
-kmpl_data.to_csv('../data/2021 KMPL Flagged.csv', index=False)
+kmpl_data.to_csv('data/2021 KMPL Flagged.csv', index=False)
 
 
 # # Plots of the flag vs non-flag transactions against different features
@@ -165,7 +165,7 @@ import pandas as pd
 import os
 
 # Read in the data
-data = pd.read_csv(os.path.join("..", "data", "Final Transactions With Flags.csv"))
+data = pd.read_csv(os.path.join("data", "Final Transactions With Flags.csv"))
 
 
 # In[14]:
@@ -214,7 +214,7 @@ def countplot(data1, title1, filename):
     plt.tight_layout()
     
     # Save the plot as a PDF file
-    plt.savefig(filename, format='pdf', bbox_inches='tight')
+    plt.savefig(f'plots/heuristics/{filename}', format='pdf', bbox_inches='tight')
     
     # Close the plot
     plt.close(fig)
@@ -240,7 +240,7 @@ def boxplot_side_by_side_cont(data, cat_var, cont_var1, cont_var2, title1, title
     plt.tight_layout()
 
     # Save the plot as a PDF file with high resolution
-    plt.savefig(filename, format='pdf', dpi=300)
+    plt.savefig(f'plots/heuristics/{filename}', format='pdf', dpi=300)
 
     # Close the plot
     plt.close(fig)
@@ -257,12 +257,12 @@ import seaborn as sns
 data2 = data[data['Transaction Amount'] < 5000]
 data2 = data2[data2['Transaction Amount'] > 0]
 
-countplot(data['Number_of_Flags'].value_counts(), 'Number of Flags', '../plots/heuristics/countplot.pdf')
+countplot(data['Number_of_Flags'].value_counts(), 'Number of Flags', 'countplot.pdf')
 
 boxplot_side_by_side_cont(data2, 'Number_of_Flags', 
                           'Transaction Amount', 'No. of Litres', 
                      'Transaction Amount', 'Number of Litres',
-                     '../plots/heuristics/boxplots_trans_litres.pdf')
+                     'boxplots_trans_litres.pdf')
 
 
 # In[26]:
@@ -321,7 +321,7 @@ def four_stacked_plots(data, categorical_vars, cluster_var, titles, filename, ma
         axs[i].legend(title='Categories', fontsize=10, labels=shortened_names, loc='center left', bbox_to_anchor=(1, 0.5))
 
     plt.tight_layout()
-    plt.savefig(filename, format='pdf', bbox_inches='tight', dpi=300)
+    plt.savefig(f'plots/heuristics/{filename}', format='pdf', bbox_inches='tight', dpi=300)
     plt.close(fig)
 
 def create_proportions_tables(data, categorical_vars, cluster_var, titles, max_categories=8, max_length=20):
@@ -376,7 +376,7 @@ four_stacked_plots(data,
                    ['MODEL DERIVATIVE', 'DEPARTMENT', 'District', 'RATE CARD CATEGORY'],
                    'Number_of_Flags',
                    ['Model Derivative', 'Department', 'District', 'Rate Card Category'],
-                   '../plots/heuristics/heuristics_categorical.pdf',
+                   'heuristics_categorical.pdf',
                    max_categories=5, max_length=15, show_proportions=True)
 
 

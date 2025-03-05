@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import os
 
 # Read in the dataset
-trans_df = pd.read_csv(os.path.join("..", "data", "Final for clustering.csv"))
+trans_df = pd.read_csv(os.path.join("data", "Final for clustering.csv"))
 
 
 # In[2]:
@@ -85,7 +85,7 @@ plt.grid(True, which='both', linestyle='--', linewidth=0.5)
 plt.tight_layout()
 
 # Save the plot as a PDF file with high resolution
-plt.savefig('../final_plots/longitudinal_clustering/lkmeans_elbow_method_plot.pdf', format='pdf', dpi=300)
+plt.savefig('plots/clustering/lkmeans_elbow_method_plot.pdf', format='pdf', dpi=300)
 
 
 # In[59]:
@@ -132,7 +132,7 @@ plt.grid(True, which='both', linestyle='--', linewidth=0.5)
 plt.tight_layout()
 
 # Save the dendrogram as a PDF file with high resolution
-plt.savefig('../final_plots/longitudinal_clustering/agglomerative_dendrogram.pdf', format='pdf', dpi=300)
+plt.savefig('plots/clustering/agglomerative_dendrogram.pdf', format='pdf', dpi=300)
 
 plt.show()  # Display the dendrogram
 
@@ -159,7 +159,7 @@ vehicle_clusters.head()
 
 
 # Save the longitudinal clusters to a CSV file
-vehicle_clusters.to_csv('../data/final_longitudinal_clusters.csv', index=False)
+vehicle_clusters.to_csv('data/final_longitudinal_clusters.csv', index=False)
 
 
 # # Aggregated data clustering (clustering vehicles)
@@ -172,7 +172,7 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
 # Read in the aggregated dataset
-data_agg = pd.read_csv(os.path.join("..", "data", "Final KMPL dataset.csv"))
+data_agg = pd.read_csv(os.path.join("data", "Final KMPL dataset.csv"))
 
 # Drop the 'REG_NUM' column
 data_agg = data_agg.drop('REG_NUM', axis=1)
@@ -333,14 +333,14 @@ data_vehicles.head()
 # In[72]:
 
 
-data_vehicles.to_csv('../data/final_clusters.csv', index=False)
+data_vehicles.to_csv('data/final_clusters.csv', index=False)
 
 
 # In[87]:
 
 
 # Read in the dataset
-data_vehicles = pd.read_csv('../data/final_clusters.csv')
+data_vehicles = pd.read_csv('data/final_clusters.csv')
 
 
 # In[236]:
@@ -398,7 +398,7 @@ def plot_top_categories(data, cluster_column, categorical_var, num_top_categorie
             plt.text(0.5, 0.5, f'No data for Cluster {cluster}', fontsize=13, ha='center')
 
     plt.tight_layout()
-    plt.savefig(f'{output_path}/top_{cluster_column}_{categorical_var}.pdf', format='pdf', dpi=300)
+    plt.savefig(f'plots/clustering/{output_path}/top_{cluster_column}_{categorical_var}.pdf', format='pdf', dpi=300)
 
 # Function to truncate category names
 def truncate_category_names(categories, max_length=15):
@@ -465,7 +465,7 @@ def plot_bivariate_grid(df, numeric_var, cat_vars, plot_file_path):
 
 
     plt.tight_layout()
-    plt.savefig(plot_file_path, bbox_inches='tight')
+    plt.savefig(f'plots/clustering/{plot_file_path}', bbox_inches='tight')
     plt.close()
 
 
@@ -518,7 +518,7 @@ def plot_categorical_distributions(df, main_cat_var, cat_vars, plot_file_path):
         ax.legend(title=variable, loc='upper right')
 
     plt.tight_layout()
-    plt.savefig(plot_file_path, bbox_inches='tight')
+    plt.savefig(f'plots/clustering/{plot_file_path}', bbox_inches='tight')
     plt.close()
 
 
@@ -598,7 +598,7 @@ import pandas as pd
 import os
 
 # Read in the dataset
-trans_df = pd.read_csv(os.path.join("..", "data", "Final transactions for analysis.csv"))
+trans_df = pd.read_csv(os.path.join("data", "Final for clustering.csv"))
 
 
 # In[14]:
@@ -920,7 +920,7 @@ trans_df.head()
 
 
 # Save the transaction clusters to a CSV file
-trans_df.to_csv('../data/final_transactions_with_clusters.csv', index=False)
+trans_df.to_csv('data/final_transactions_with_clusters.csv', index=False)
 
 
 # # Plotting the transaction plots
@@ -931,7 +931,7 @@ trans_df.to_csv('../data/final_transactions_with_clusters.csv', index=False)
 import pandas as pd
 
 # Read the final transaction dataset
-final_transactions = pd.read_csv('../data/final_transactions_with_clusters.csv')
+final_transactions = pd.read_csv('data/final_transactions_with_clusters.csv')
 
 # Display the first few rows of the dataset
 final_transactions.head()

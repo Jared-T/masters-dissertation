@@ -13,7 +13,7 @@ from sklearn.preprocessing import StandardScaler
 import os
 
 # Read in the aggregated dataset
-data_agg = pd.read_csv(os.path.join("..", "data", "Final KMPL dataset.csv"))
+data_agg = pd.read_csv(os.path.join("data", "Final KMPL dataset.csv"))
 
 # Drop the 'REG_NUM' column
 data_agg = data_agg.drop('REG_NUM', axis=1)
@@ -76,7 +76,7 @@ anonymized_mapping_subset = {reg_num: 'ANON_REG_' + str(i) for i, reg_num in enu
 veh_df_for_report['Reg'] = veh_df_for_report['Reg'].map(anonymized_mapping_subset)
 
 # Save the anonymized dataset to a new CSV file
-veh_df_for_report.to_csv('../data/anonymized_vehicles.csv', index=False)
+veh_df_for_report.to_csv('data/anonymized_vehicles.csv', index=False)
 
 
 # In[5]:
@@ -132,7 +132,7 @@ plt.grid(True, which='both', linestyle='--', linewidth=0.5)
 plt.tight_layout()
 
 # Save the plot as a PDF file with high resolution
-plt.savefig('../plots/vehicle_clustering/kmeans_elbow_method_plot.pdf', format='pdf', dpi=300)
+plt.savefig('plots/clustering/kmeans_elbow_method_plot.pdf', format='pdf', dpi=300)
 
 
 # In[6]:
@@ -180,7 +180,7 @@ plt.grid(True, which='both', linestyle='--', linewidth=0.5)
 plt.tight_layout()
 
 # Save the dendrogram as a PDF file with high resolution
-plt.savefig('../plots/vehicle_clustering/agglomerative_dendrogram.pdf', format='pdf', dpi=300)
+plt.savefig('plots/clustering/agglomerative_dendrogram.pdf', format='pdf', dpi=300)
 plt.show()  # Display the dendrogram
 
 
@@ -259,7 +259,7 @@ def countplot_side_by_side(data1, data2, title1, title2, filename):
     plt.tight_layout()
     
     # Save the plot as a PDF file
-    plt.savefig(filename, format='pdf', bbox_inches='tight')
+    plt.savefig(f'plots/clustering/{filename}', format='pdf', bbox_inches='tight')
     
     # Close the plot
     plt.close(fig)
@@ -311,7 +311,7 @@ def stacked_bar_chart_clusters(data, categorical_var, cluster_var, x_title, file
     plt.tight_layout()
     
     # Save the plot as a PDF file
-    plt.savefig(filename, format='pdf', bbox_inches='tight')
+    plt.savefig(f'plots/clustering/{filename}', format='pdf', bbox_inches='tight')
     
     # Close the plot
     plt.close(fig)
@@ -365,7 +365,7 @@ def four_stacked_plots(data, categorical_vars, cluster_var, titles, filename, ma
         axs[i].legend(title='Categories', fontsize=10, labels=shortened_names, loc='center left', bbox_to_anchor=(1, 0.5))
 
     plt.tight_layout()
-    plt.savefig(filename, format='pdf', bbox_inches='tight', dpi=300)
+    plt.savefig(f'plots/clustering/{filename}', format='pdf', bbox_inches='tight', dpi=300)
     plt.close(fig)
 
 def boxplot_side_by_side_cont(data, cat_var, cont_var1, cont_var2, title1, title2, filename):
@@ -389,7 +389,7 @@ def boxplot_side_by_side_cont(data, cat_var, cont_var1, cont_var2, title1, title
     plt.tight_layout()
 
     # Save the plot as a PDF file with high resolution
-    plt.savefig(filename, format='pdf', dpi=300)
+    plt.savefig(f'plots/clustering/{filename}', format='pdf', dpi=300)
 
     # Close the plot
     plt.close(fig)
@@ -415,7 +415,7 @@ def boxplot_side_by_side_cat(data, cat_var1, cat_var2, cont_var, title1, title2,
     plt.tight_layout()
 
     # Save the plot as a PDF file with high resolution
-    plt.savefig(filename, format='pdf', dpi=300)
+    plt.savefig(f'plots/clustering/{filename}', format='pdf', dpi=300)
 
     # Close the plot
     plt.close(fig)
@@ -488,7 +488,7 @@ agg_clust = data_agg['AggCluster'].value_counts()
 
 countplot_side_by_side(kmeans_clust, agg_clust, 
                      'k-means', 'agglomerative', 
-                     '../plots/vehicle_clustering/cluster_counts.pdf')
+                     'cluster_counts.pdf')
 
 
 # In[77]:
@@ -496,13 +496,11 @@ countplot_side_by_side(kmeans_clust, agg_clust,
 
 boxplot_side_by_side_cat(data_agg, 'KmeansCluster', 'AggCluster', 
                          'Mean Transaction Amount', 
-                     'k-means', 'agglomerative',
-                     '../plots/vehicle_clustering/cluster_boxplots_meanstrans.pdf')
+                     'cluster_boxplots_meanstrans.pdf')
 
 boxplot_side_by_side_cat(data_agg, 'KmeansCluster', 'AggCluster', 
                          'Mean No. of Litres', 
-                     'k-means', 'agglomerative',
-                     '../plots/vehicle_clustering/cluster_boxplots_meanlitres.pdf')
+                     'cluster_boxplots_meanlitres.pdf')
 
 
 # In[25]:
@@ -512,14 +510,14 @@ four_stacked_plots(data_agg,
                    ['MODEL DERIVATIVE', 'DEPARTMENT', 'District', 'RATE CARD CATEGORY'],
                    'KmeansCluster',
                    ['Model Derivative', 'Department', 'District', 'Rate Card Category'],
-                   '../plots/vehicle_clustering/kmeans_clustered_vehicle_plots.pdf',
+                   'kmeans_clustered_vehicle_plots.pdf',
                    max_categories=5, max_length=15, show_proportions=True)
 
 four_stacked_plots(data_agg,
                    ['MODEL DERIVATIVE', 'DEPARTMENT', 'District', 'RATE CARD CATEGORY'],
                    'AggCluster',
                    ['Model Derivative', 'Department', 'District', 'Rate Card Category'],
-                   '../plots/vehicle_clustering/agg_clustered_vehicle_plots.pdf',
+                   'agg_clustered_vehicle_plots.pdf',
                    max_categories=5, max_length=15, show_proportions=True)
 
 
