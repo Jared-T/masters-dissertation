@@ -1,182 +1,237 @@
 #!/usr/bin/env python
-# coding: utf-8
+# -*- coding: utf-8 -*-
+"""
+Heuristic Flags Implementation for Fuel Transaction Anomaly Detection
 
-# In[1]:
+This module implements a set of heuristic indicators to identify potentially anomalous
+fuel transactions. The implemented flags include:
+1. Abnormally large transactions relative to vehicle category, district, and month
+2. Suspiciously frequent transactions (less than specified days apart)
+3. Fuel price discrepancies compared to official benchmarks
 
+Author: Jared Tavares
+"""
 
 import pandas as pd
-import openpyxl
-import os
-import tslearn
-
-# Read in the dataset
-data = pd.read_csv(os.path.join("data", "Final for clustering.csv"))
-kmpl_data = pd.read_csv(os.path.join("data", "Final KMPL dataset.csv"))
-
-
-# In[2]:
-
-
-# Get unique DEPARTMENT values
-data['DEPARTMENT'].unique()
-
-
-# In[3]:
-
-
-data.columns
-
-
-# In[4]:
-
-
-# Calculate the average transaction amount for each vehicle category
-data['Average_Category_Amount'] = data.groupby(['RATE CARD CATEGORY', 'District', 'Month Name'])['Transaction Amount'].transform('mean')
-
-
-# In[5]:
-
-
-# Flag transaction amounts that are large for a category
-data['Transaction_Amount_Flag'] = data['Transaction Amount'] > data['Average_Category_Amount'] * 1.5
-
-
-# In[6]:
-
-
-# Check the value counts of the flag
-data['Transaction_Amount_Flag'].value_counts()
-
-
-# # Flag tranactions where the days between transactions are less than 2
-
-# In[7]:
-
-
-# Convert 'Transaction Date' to datetime
-data['Transaction Date'] = pd.to_datetime(data['Transaction Date'])
-
-# Sort data by 'REG_NUM' and 'Transaction Date'
-data.sort_values(by=['REG_NUM', 'Transaction Date'], inplace=True)
-
-# Calculate the difference in days between transactions for each vehicle
-data['Days_Between_Transactions'] = data.groupby('REG_NUM')['Transaction Date'].diff().dt.days
-
-# Flag transactions that occur too frequently (less than 2 days apart) and the transaction amount is greater than the average transaction amount for that vehicle category
-data['Transaction_Frequency_Flag'] = (data['Days_Between_Transactions'] < 2) & (data['Transaction Amount'] > data['Average_Category_Amount'])
-
-
-# In[8]:
-
-
-# Check the value counts of the flag
-data['Transaction_Frequency_Flag'].value_counts()
-
-
-# In[9]:
-
-
-# Display 10 random rows where the flag is True
-data[data['Transaction_Frequency_Flag']].sample(10)
-
-
-# In[10]:
-
-
-data.columns
-
-
-# In[11]:
-
-
-# Function to calculate if the difference exceeds the threshold for each transaction
-diesel_actual = [22.75, 23.34, 23.43] # Actual diesel price
-gov_price = 20.64 # Government price
-mean_diesel = sum(diesel_actual) / 3 # Mean diesel price
-diff = mean_diesel - gov_price # Difference between mean diesel price and government price
-
-# Create a new column called Coastal Diesel Adjusted for the difference
-data['Coastal Diesel Adjusted'] = data['Coastal Diesel'] + diff
-
-# Create a new column called price difference. If the Fuel Type is Diesel, the price difference is the difference between the Coastal Diesel Adjusted and the Government Price. If the Fuel Type is Petrol, the price difference is the difference between the Coastal Petrol and the Government Price
-data['Price Difference'] = data.apply(lambda row: abs(row['Coastal Diesel Adjusted'] - row['Estimated Price Per Litre']) if row['Fuel Type'] == 'Diesel' else abs(row['Coastal Petrol'] - row['Estimated Price Per Litre']), axis=1)
-
-# Create a Fuel Price Flag column that flags transactions where the price difference is greater than R1
-data['Fuel_Price_Flag'] = data['Price Difference'] > 1
-
-
-# In[12]:
-
-
-# Check the value counts of the flag
-data['Fuel_Price_Flag'].value_counts()
-
-
-# In[13]:
-
-
-# Create a new variable called number of flags that counts the number of flags for each transaction as an integer
-data['Number_of_Flags'] = data['Transaction_Amount_Flag'].astype(int) + data['Transaction_Frequency_Flag'].astype(int) + data['Fuel_Price_Flag'].astype(int)
-
-# Convert Number_of_Flags to a categorical variable
-data['Number_of_Flags'] = data['Number_of_Flags'].astype('category')
-
-
-# In[14]:
-
-
-# Check the value counts of the flag
-data['Number_of_Flags'].value_counts()
-
-
-# In[50]:
-
-
-# Save the data to a new file
-data.to_csv('data/Final Transactions With Flags.csv', index=False)
-
-
-# In[15]:
-
-
-kmpl_threshold = 5  # Set threshold for KMPL
-kmpl_data['KMPL_Flag'] = kmpl_data['KMPL'] < kmpl_threshold
-
-
-# In[16]:
-
-
-kmpl_data['KMPL_Flag'].value_counts()
-
-
-# In[53]:
-
-
-# Save the KMPL flagged data to a new file
-kmpl_data.to_csv('data/2021 KMPL Flagged.csv', index=False)
-
-
-# # Plots of the flag vs non-flag transactions against different features
-
-# In[17]:
-
-
-import pandas as pd
-import os
-
-# Read in the data
-data = pd.read_csv(os.path.join("data", "Final Transactions With Flags.csv"))
-
-
-# In[14]:
-
-
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import seaborn as sns
+import os
 from matplotlib.ticker import FixedLocator, FixedFormatter
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+def load_data(filepath):
+    """
+    Load the transaction dataset from a CSV file.
+    
+    Parameters:
+    -----------
+    filepath : str
+        Path to the CSV file
+        
+    Returns:
+    --------
+    pandas.DataFrame
+        Loaded dataset
+    """
+    try:
+        data = pd.read_csv(filepath)
+        logger.info(f"Successfully loaded data from {filepath} with {data.shape[0]} rows and {data.shape[1]} columns")
+        return data
+    except Exception as e:
+        logger.error(f"Error loading data from {filepath}: {str(e)}")
+        raise
+
+def calculate_transaction_amount_flag(data, multiplier=1.5):
+    """
+    Flag transactions with amounts significantly higher than the average for the same
+    vehicle category, district, and month.
+    
+    Parameters:
+    -----------
+    data : pandas.DataFrame
+        Transaction data
+    multiplier : float
+        Threshold multiplier for flagging transactions
+        
+    Returns:
+    --------
+    pandas.DataFrame
+        Data with added transaction amount flag
+    """
+    logger.info(f"Calculating transaction amount flags with multiplier={multiplier}")
+    
+    # Calculate the average transaction amount for each vehicle category, district, and month
+    data['Average_Category_Amount'] = data.groupby(
+        ['RATE CARD CATEGORY', 'District', 'Month Name']
+    )['Transaction Amount'].transform('mean')
+    
+    # Flag transaction amounts that are large for a category
+    data['Transaction_Amount_Flag'] = data['Transaction Amount'] > data['Average_Category_Amount'] * multiplier
+    
+    flag_count = data['Transaction_Amount_Flag'].sum()
+    logger.info(f"Identified {flag_count} transactions ({flag_count/len(data)*100:.2f}%) as abnormally large")
+    
+    return data
+
+def calculate_transaction_frequency_flag(data):
+    """
+    Flag transactions that occur too frequently (less than 2 days apart) and with an amount
+    greater than the average transaction amount for that vehicle category.
+    
+    Parameters:
+    -----------
+    data : pandas.DataFrame
+        Transaction data
+        
+    Returns:
+    --------
+    pandas.DataFrame
+        Data with added transaction frequency flag
+    """
+    logger.info("Calculating transaction frequency flags")
+    
+    # Ensure transaction date is in datetime format
+    if not pd.api.types.is_datetime64_dtype(data['Transaction Date']):
+        data['Transaction Date'] = pd.to_datetime(data['Transaction Date'])
+    
+    # Sort data by registration number and transaction date
+    data = data.sort_values(by=['REG_NUM', 'Transaction Date'])
+    
+    # Calculate the difference in days between transactions for each vehicle
+    data['Days_Between_Transactions'] = data.groupby('REG_NUM')['Transaction Date'].diff().dt.days
+    
+    # Flag transactions that occur too frequently and with higher than average amounts
+    data['Transaction_Frequency_Flag'] = (
+        (data['Days_Between_Transactions'] < 2) & 
+        (data['Transaction Amount'] > data['Average_Category_Amount'])
+    )
+    
+    flag_count = data['Transaction_Frequency_Flag'].sum()
+    logger.info(f"Identified {flag_count} transactions ({flag_count/len(data)*100:.2f}%) as suspiciously frequent")
+    
+    return data
+
+def calculate_fuel_price_flag(data, price_threshold=1.0):
+    """
+    Flag transactions with fuel prices that deviate significantly from the expected prices.
+    
+    Parameters:
+    -----------
+    data : pandas.DataFrame
+        Transaction data
+    price_threshold : float
+        Threshold for price difference flagging (in rand)
+        
+    Returns:
+    --------
+    pandas.DataFrame
+        Data with added fuel price flag
+    """
+    logger.info(f"Calculating fuel price flags with threshold={price_threshold}")
+    
+    # Official diesel prices and adjustment
+    diesel_actual = [22.75, 23.34, 23.43]  # Actual diesel price
+    gov_price = 20.64  # Government price
+    mean_diesel = sum(diesel_actual) / 3  # Mean diesel price
+    diff = mean_diesel - gov_price  # Difference between mean diesel price and government price
+    
+    # Create adjusted price columns
+    data['Coastal Diesel Adjusted'] = data['Coastal Diesel'] + diff
+    
+    # Calculate price difference based on fuel type
+    data['Price Difference'] = data.apply(
+        lambda row: abs(row['Coastal Diesel Adjusted'] - row['Estimated Price Per Litre']) 
+        if row['Fuel Type'] == 'Diesel' 
+        else abs(row['Coastal Petrol'] - row['Estimated Price Per Litre']), 
+        axis=1
+    )
+    
+    # Flag transactions with significant price differences
+    data['Fuel_Price_Flag'] = data['Price Difference'] > price_threshold
+    
+    flag_count = data['Fuel_Price_Flag'].sum()
+    logger.info(f"Identified {flag_count} transactions ({flag_count/len(data)*100:.2f}%) with suspicious fuel prices")
+    
+    return data
+
+def calculate_flag_counts(data):
+    """
+    Calculate the total number of flags for each transaction and categorize them.
+    
+    Parameters:
+    -----------
+    data : pandas.DataFrame
+        Transaction data with individual flags
+        
+    Returns:
+    --------
+    pandas.DataFrame
+        Data with added flag count column
+    """
+    logger.info("Calculating total flag counts for each transaction")
+    
+    # Create a new variable that counts the number of flags for each transaction
+    data['Number_of_Flags'] = (
+        data['Transaction_Amount_Flag'].astype(int) + 
+        data['Transaction_Frequency_Flag'].astype(int) + 
+        data['Fuel_Price_Flag'].astype(int)
+    )
+    
+    # Convert to categorical for better memory usage and performance
+    data['Number_of_Flags'] = data['Number_of_Flags'].astype('category')
+    
+    # Log flag distribution
+    flag_counts = data['Number_of_Flags'].value_counts().sort_index()
+    for flag_count, count in flag_counts.items():
+        logger.info(f"Transactions with {flag_count} flags: {count} ({count/len(data)*100:.2f}%)")
+    
+    return data
+
+def shorten_names(names, max_length=20):
+    """
+    Shorten long names for plotting purposes.
+    
+    Parameters:
+    -----------
+    names : list or pandas.Index
+        Names to shorten
+    max_length : int
+        Maximum length for shortened names
+        
+    Returns:
+    --------
+    list
+        Shortened names
+    """
+    shortened_names = []
+    for name in names:
+        if len(str(name)) > max_length:
+            shortened_names.append(str(name)[:max_length] + '...')
+        else:
+            shortened_names.append(str(name))
+    return shortened_names
 
 def countplot(data1, title1, filename):
+    """
+    Create a count plot for flag counts.
+    
+    Parameters:
+    -----------
+    data1 : pandas.Series
+        Data for the plot
+    title1 : str
+        Title for the plot
+    filename : str
+        Filename for saving the plot
+    """
     # Filter the data and calculate the sum of counts for the remaining categories
     filtered_data1 = data1.to_frame()
     
@@ -220,6 +275,26 @@ def countplot(data1, title1, filename):
     plt.close(fig)
 
 def boxplot_side_by_side_cont(data, cat_var, cont_var1, cont_var2, title1, title2, filename):
+    """
+    Create side-by-side boxplots for comparing continuous variables across categories.
+    
+    Parameters:
+    -----------
+    data : pandas.DataFrame
+        Data for the plots
+    cat_var : str
+        Categorical variable for x-axis
+    cont_var1 : str
+        First continuous variable for y-axis
+    cont_var2 : str
+        Second continuous variable for y-axis
+    title1 : str
+        Title for the first plot
+    title2 : str
+        Title for the second plot
+    filename : str
+        Filename for saving the plot
+    """
     # Setting the aesthetic style of the plots
     sns.set(style="whitegrid")
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 6))
@@ -245,43 +320,31 @@ def boxplot_side_by_side_cont(data, cat_var, cont_var1, cont_var2, title1, title
     # Close the plot
     plt.close(fig)
 
-
-# In[15]:
-
-
-# Plot of flag against transaction amount
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-# Create a new dataframe called data2 with extreme values removed
-data2 = data[data['Transaction Amount'] < 5000]
-data2 = data2[data2['Transaction Amount'] > 0]
-
-countplot(data['Number_of_Flags'].value_counts(), 'Number of Flags', 'countplot.pdf')
-
-boxplot_side_by_side_cont(data2, 'Number_of_Flags', 
-                          'Transaction Amount', 'No. of Litres', 
-                     'Transaction Amount', 'Number of Litres',
-                     'boxplots_trans_litres.pdf')
-
-
-# In[26]:
-
-
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
-
-def shorten_names(names, max_length=20):
-    shortened_names = []
-    for name in names:
-        if len(name) > max_length:
-            shortened_names.append(name[:max_length] + '...')
-        else:
-            shortened_names.append(name)
-    return shortened_names
-
 def four_stacked_plots(data, categorical_vars, cluster_var, titles, filename, max_categories=8, max_length=20, color_theme='tab10', show_proportions=False):
+    """
+    Create four stacked bar plots for categorical variables across clusters.
+    
+    Parameters:
+    -----------
+    data : pandas.DataFrame
+        Data for the plots
+    categorical_vars : list
+        List of categorical variables to plot
+    cluster_var : str
+        Clustering variable
+    titles : list
+        List of titles for the plots
+    filename : str
+        Filename for saving the plots
+    max_categories : int
+        Maximum number of categories to show
+    max_length : int
+        Maximum length for category names
+    color_theme : str
+        Color theme for the plots
+    show_proportions : bool
+        Whether to show proportion values on the bars
+    """
     fig, axs = plt.subplots(2, 2, figsize=(10, 8))
     axs = axs.ravel()
 
@@ -298,6 +361,14 @@ def four_stacked_plots(data, categorical_vars, cluster_var, titles, filename, ma
         # Shorten the category names if necessary
         shortened_names = shorten_names(cluster_proportions.columns, max_length=max_length)
 
+        # Check if the cluster labels start from 0 or -1
+        if cluster_proportions.index.min() == 0:
+            # Shift the cluster labels up by 1 and rename them
+            cluster_proportions.index = [str(i+1) for i in cluster_proportions.index]
+        elif cluster_proportions.index.min() == -1:
+            # Shift the cluster labels up by 1 (excluding -1) and rename them
+            cluster_proportions.index = ["None" if i == -1 else str(i+1) for i in cluster_proportions.index]
+
         # Get the specified color theme
         color_scheme = plt.cm.get_cmap(color_theme, len(cluster_proportions.columns))
         colors = color_scheme(range(len(cluster_proportions.columns)))
@@ -305,7 +376,7 @@ def four_stacked_plots(data, categorical_vars, cluster_var, titles, filename, ma
         # Create the stacked bar chart in the corresponding subplot
         cluster_proportions.plot(kind='bar', stacked=True, ax=axs[i], legend=False, color=colors)
         axs[i].set_xticklabels(cluster_proportions.index, rotation=0, fontsize=12)
-        axs[i].set_xlabel('Number of Flags', fontsize=14)
+        axs[i].set_xlabel('Cluster', fontsize=14)
         axs[i].set_ylabel('Proportion', fontsize=14)
         axs[i].set_title(f"{chr(97+i)}) {title}")  # Prepend "a) ", "b) ", "c) ", "d) " to the titles
 
@@ -325,6 +396,29 @@ def four_stacked_plots(data, categorical_vars, cluster_var, titles, filename, ma
     plt.close(fig)
 
 def create_proportions_tables(data, categorical_vars, cluster_var, titles, max_categories=8, max_length=20):
+    """
+    Create tables with proportions of categorical variables across clusters.
+    
+    Parameters:
+    -----------
+    data : pandas.DataFrame
+        Data for the tables
+    categorical_vars : list
+        List of categorical variables to analyze
+    cluster_var : str
+        Clustering variable
+    titles : list
+        List of titles for the tables
+    max_categories : int
+        Maximum number of categories to include
+    max_length : int
+        Maximum length for category names
+        
+    Returns:
+    --------
+    list
+        List of DataFrames with proportion tables
+    """
     tables = []
 
     for cat_var, title in zip(categorical_vars, titles):
@@ -341,11 +435,19 @@ def create_proportions_tables(data, categorical_vars, cluster_var, titles, max_c
         shortened_names = shorten_names(cluster_proportions.columns, max_length=max_length)
         cluster_proportions.columns = shortened_names
 
+        # Check if the cluster labels start from 0 or -1
+        if cluster_proportions.index.min() == 0:
+            # Shift the cluster labels up by 1 and rename them
+            cluster_proportions.index = [str(i+1) for i in cluster_proportions.index]
+        elif cluster_proportions.index.min() == -1:
+            # Shift the cluster labels up by 1 (excluding -1) and rename them
+            cluster_proportions.index = ["None" if i == -1 else str(i+1) for i in cluster_proportions.index]
+
         # Multiply by 100 and round to 2 decimal places
         cluster_proportions = cluster_proportions.round(2)
 
         # Add the title as a column to the table
-        cluster_proportions.insert(0, 'Flags', cluster_proportions.index)
+        cluster_proportions.insert(0, 'Cluster', cluster_proportions.index)
         cluster_proportions.index = [title] * len(cluster_proportions)
 
         # Add the table to the list of tables
@@ -353,39 +455,97 @@ def create_proportions_tables(data, categorical_vars, cluster_var, titles, max_c
 
     return tables
 
+def plot_flag_distributions(data):
+    """
+    Create plots showing the distributions of flagged transactions.
+    
+    Parameters:
+    -----------
+    data : pandas.DataFrame
+        Transaction data with flags
+    """
+    # Create output directory if it doesn't exist
+    os.makedirs('plots/heuristics', exist_ok=True)
+    
+    # Plot of flag counts
+    countplot(data['Number_of_Flags'].value_counts(), 'Number of Flags', 'countplot.pdf')
+    
+    # Filter to remove extreme values
+    data_filtered = data[data['Transaction Amount'] < 5000]
+    data_filtered = data_filtered[data_filtered['Transaction Amount'] > 0]
 
-# In[33]:
-
-
-data.columns
-
-
-# In[19]:
-
-
-# Change the data type of 'Number_of_Flags' to 'category' and order the categories
-data['Number_of_Flags'] = data['Number_of_Flags'].astype('category')
-data['Number_of_Flags'] = data['Number_of_Flags'].cat.reorder_categories([0, 1, 2, 3])
-data['Number_of_Flags'] = data['Number_of_Flags'].cat.as_ordered()
-
-
-# In[27]:
-
-
-four_stacked_plots(data,
+    # Create boxplots of transaction amount and number of litres by number of flags
+    boxplot_side_by_side_cont(data_filtered, 'Number_of_Flags', 
+                          'Transaction Amount', 'No. of Litres', 
+                     'Transaction Amount', 'Number of Litres',
+                     'boxplots_trans_litres.pdf')
+    
+    # Create stacked plots of categorical variables by number of flags
+    four_stacked_plots(data,
                    ['MODEL DERIVATIVE', 'DEPARTMENT', 'District', 'RATE CARD CATEGORY'],
                    'Number_of_Flags',
                    ['Model Derivative', 'Department', 'District', 'Rate Card Category'],
                    'heuristics_categorical.pdf',
                    max_categories=5, max_length=15, show_proportions=True)
-
-
-# In[28]:
-
-
-create_proportions_tables(data,
+    
+    # Create proportion tables
+    tables = create_proportions_tables(data,
                         ['MODEL DERIVATIVE', 'DEPARTMENT', 'District', 'RATE CARD CATEGORY'],
                         'Number_of_Flags',
                         ['Model Derivative', 'Department', 'District', 'Rate Card Category'],
                         max_categories=5, max_length=15)
+    
+    # Save the tables to CSV files
+    for i, table in enumerate(tables):
+        table.to_csv(f'plots/heuristics/proportions_table_{i}.csv')
 
+def apply_heuristic_flags(data, multiplier=1.5, price_threshold=1.0):
+    """
+    Apply all heuristic flags to the transaction data.
+    
+    Parameters:
+    -----------
+    data : pandas.DataFrame
+        Transaction data
+    multiplier : float
+        Threshold multiplier for transaction amount flag
+    price_threshold : float
+        Threshold for price difference flag
+        
+    Returns:
+    --------
+    pandas.DataFrame
+        Data with all flags applied
+    """
+    # Apply each flag sequentially
+    data = calculate_transaction_amount_flag(data, multiplier)
+    data = calculate_transaction_frequency_flag(data)
+    data = calculate_fuel_price_flag(data, price_threshold)
+    data = calculate_flag_counts(data)
+    
+    return data
+
+def main():
+    """Main function to execute the heuristic flags analysis."""
+    # Load the dataset
+    logger.info("Starting heuristic flags analysis")
+    data = load_data(os.path.join("data", "Final for clustering.csv"))
+    
+    # Apply all heuristic flags
+    flagged_data = apply_heuristic_flags(data)
+    
+    # Plot the distributions
+    plot_flag_distributions(flagged_data)
+    
+    # Save the flagged data
+    output_path = 'data/Final Transactions With Flags.csv'
+    flagged_data.to_csv(output_path, index=False)
+    logger.info(f"Saved flagged transactions to {output_path}")
+    
+    logger.info("Heuristic flags analysis completed successfully")
+    
+    return flagged_data
+
+if __name__ == "__main__":
+    # Execute the main function if the script is run directly
+    flagged_data = main()
